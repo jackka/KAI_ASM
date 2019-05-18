@@ -11,23 +11,25 @@ public Random, Selection, Skreshiv, Mutation, Korni
 ;	A51...A55
 
 Random proc 
-    mov EBP,ESP
-    mov ECX, dword ptr [EBP+4]
+
+
+ M EQU 50
+local X[M]:DWORD
+local numA:DWORD
+local numM:DWORD
+local adrX:DWORD 
+local intN:DWORD 
+
+	mov numA, 48271
+	mov numM, 2147483647
 	
-M EQU 50
-X DD M DUP(0)
-
-numA DD 48271
-numM DD 2147483647
-adrX DD ?
-intN DD ?
-
 	xor EAX,EAX
-	mov AL,50
+	mov AL,M
 	
 ;	inintln AL					;присвоить AL введенное значение M<=10
 
 ;	mov byte ptr [M],AL			;по адресу [M] записываем значение размером байт из AL=M<=10
+
 comment &
 	outstr 'X['					; 
 	outint byte ptr [X]			;по адресу [X] размещен по умолчанию 0
@@ -39,7 +41,9 @@ comment &
     mov ECX,M					;инициализируем счетчик ECX=M
     lea ESI,X					;загрузка адреса первого элемента X в ESI
 	
-    call Random_Calc			;вызов Random_Calc
+    jmp Random_Calc
+
+ After_Random_Calc: 
     ;
     newline
     lea ESI,X					;загрузка адреса элемента X в ESI 
@@ -59,30 +63,29 @@ comment &
     dec dword ptr [intN]
     jnz nextX
     ;
-		Random_Calc proc
+	jmp exit_proc
 	
-		dec ECX					;ECX-1 (ECX=M=размер массива)
-		jcxz return				;если cx=0 (введены все числа), то процедура заканчивается
-		next:					;если cx не равно 0
-		mov EAX,dword ptr[ESI]	;размещаем в EAX предыдущее значение (размером dword с адреса, указанного в ESI)
-		mul dword ptr [numA]	;EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
-		div dword ptr [numM]	;a * X(i-1) mod m (полученное произведение в EAX делим на dword, указанного по адресу в numM=2147483647)
-		
-	;		cmp EBX,D
-	;		ja next
+ Random_Calc:
+	dec ECX					;ECX-1 (ECX=M=размер массива)
+	jcxz return				;если cx=0 (введены все числа), то процедура заканчивается
+	next:					;если cx не равно 0
+	mov EAX,dword ptr[ESI]	;размещаем в EAX предыдущее значение (размером dword с адреса, указанного в ESI)
+	mul dword ptr [numA]	;EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
+	div dword ptr [numM]	;a * X(i-1) mod m (полученное произведение в EAX делим на dword, указанного по адресу в numM=2147483647)
 	
-		add ESI,4				;перепрыгнули в ESI через 4 байта
-		mov dword ptr[ESI],EDX	;положили по адресу ESI значение из EDX (a * X(i-1) mod m) размером dword
-		loop next				;на начало цикла
-		return:
+	;	cmp EBX,D
+	;	ja next
 	
-		ret 
-		Random_Calc endp 
+	add ESI,4				;перепрыгнули в ESI через 4 байта
+	mov dword ptr[ESI],EDX	;положили по адресу ESI значение из EDX (a * X(i-1) mod m) размером dword
+	loop next				;на начало цикла
+	return:
+	jmp  After_Random_Calc
 
+ exit_proc:
 
 	ret
 Random endp
-
 
 
 

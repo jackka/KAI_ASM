@@ -1,6 +1,6 @@
 Comment &
 A1*x1 + A2*x2 + A3*x3 + A4*x4 + A5*x5 = D,
-xi - неизвестные положительные целые, Ai и D–заданные положительные целые константы
+xi - неизвестные положительные целые, Ai и D –заданные положительные целые константы
 i=1,..,5
 Размер начальной популяции N задаёт пользователь в диапазоне  4<= N<= 10. 
 Начальнаяпопуляция формируется случайным образом.
@@ -27,7 +27,7 @@ extern  Random@0:near, Selection@0:near, Skreshiv@0:near, Mutation@0:near, Korni
 .data
 N    DB ?			;размер начальной популяции в диапазоне  4<= N<= 10
 X    DB 5 DUP (?)		
-A    DB 5 DUP (?)		;вводит пользователь
+A    DB 5 DUP (?)	;вводит пользователь
 D    DD ?			;вводит пользователь
 M    DB ?			;количество итераций
 K    DB ?			;количество скрещиваемых особей
@@ -36,36 +36,33 @@ P    DB ?			;вероятность мутации (1/p)
 .code
 start:
 
-outstrln "введите N в диапазоне 4...10"
-outwordln N
+outstr "введите N в диапазоне 4...10 : "
+inintln  [N]
 
 outstr "A1="					;запрос на ввод A1
-inintln AL					;разместим введенное значение в AL
-mov byte ptr [A],AL				;по адресу первого элемента A записываем байт из AL
+inintln [A]					
 outstr "A2="					;запрос на ввод A2
-inintln AL					;разместим введенное значение в AL
-mov byte ptr [A+1],AL				;по адресу второго элемента A записываем байт из AL
-outstr "A3="					;запрос на ввод A1
-inintln AL					;разместим введенное значение в AL
-mov byte ptr [A+2],AL				;по адресу третьего элемента A записываем байт из AL
-outstr "A4="					;запрос на ввод A1
-inintln AL					;разместим введенное значение в AL
-mov byte ptr [A+3],AL				;по адресу четвертого элемента A записываем байт из AL
-outstr "A5="					;запрос на ввод A1
-inintln AL					;разместим введенное значение в AL
-mov byte ptr [A+4],AL				;по адресу четвертого элемента A записываем байт из AL
+inintln [A+1]				
+outstr "A3="					;запрос на ввод A3
+inintln [A+2]				
+outstr "A4="					;запрос на ввод A4
+inintln [A+3]				
+outstr "A5="					;запрос на ввод A5
+inintln [A+4]				
 
-outstrln "введите D"
-outwordln D
+ call Random@0
+ 
+outstr "введите D : "			;свободный член уравнени€ 
+inintln [D]				
 
-outstrln "введите M"
-outwordln M
+outstr "введите M :"
+inintln [M]
 
-outstrln "введите K"
-outwordln K
+outstr "введите K :"
+inintln [K]
 
-outstrln "введите P"
-outwordln P
+outstr "введите P :"
+inintln  [P]
 
 end start
 
