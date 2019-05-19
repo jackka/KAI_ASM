@@ -91,7 +91,7 @@ comment &
 
  exit_proc:
 
-	ret
+	ret 4
 PopulationGEN endp
 
 
@@ -234,7 +234,7 @@ local xArray:dword
 	SummMul:
 
 	
-	xor ax,ax
+	xor eax,eax
 	mov al,byte ptr [ecx+esi]		; готовим умножаемое в al
 	mov bl,byte ptr [ecx*4+edi]		; готовим множитель в bl
 	
@@ -254,6 +254,31 @@ local xArray:dword
 	mov eax, SumOfMul
 	ret 12
 OcenkaPopul endp
+
+
+;ВЫВОД РЕЗУЛЬТАТА
+
+OutResult proc X:dword		
+
+	pusha
+	mov edi,dword ptr [X]
+	
+	newline
+	outstrln "полученное решение:"
+	outstr "X1="
+	outwordln byte ptr [edi]
+	outstr "X2="
+	outwordln byte ptr [edi+4]
+	outstr "X3="
+	outwordln byte ptr [edi+8]
+	outstr "X4="
+	outwordln byte ptr [edi+12]
+	outstr "X5="
+	outwordln byte ptr [edi+16]
+	popa
+	
+	ret 4
+OutResult endp
 
 end
 

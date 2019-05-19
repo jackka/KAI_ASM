@@ -22,18 +22,22 @@ i=1,..,5
 
 include console.inc 
 
-extern  PopulationGEN@4:near, Random_mid@0:near, Selection@0:near, Skreshiv@0:near, Mutation@0:near, OcenkaPopul@12:near  ;внешние процедуры
+extern  PopulationGEN@4:near, Random_mid@0:near, Selection@0:near, Skreshiv@0:near, Mutation@0:near, OcenkaPopul@12:near, OutResult@4:near ;внешние процедуры
 
  
 
 .data
 N    DB ?			;размер начальной популЯции в диапазоне  4<= N<= 10
-X    DD 50 DUP (?)		;берем только посдений байт, но место резервируем под полный DD
+X    DD 50 DUP (?)	;берем только посдений байт, но место резервируем под полный DD
 A    DB 5 DUP (?)	;вводит пользователь
 D    DD ?			;вводит пользователь
 M    DB ?			;количество итераций
 K    DB ?			;количество скрещиваемых особей
 P    DB ?			;вероЯтность мутации (1/p)
+
+Res  DD 10 DUP (?)	;результаты вычиления уравнений
+
+
 
 .code
 start:
@@ -77,18 +81,34 @@ equation_calc:
  
     push offset D		; параметры загружаются в обратном порядке
 	push esi			
-	add esi, 20		; движемся по массиву X с шагом 5( это OcenkaPopul@12 скачет через 5 ) * 4( генератор сл. работает с DD ) 
-
 	push offset A
 
 	call OcenkaPopul@12
+	
 	nop
+	cmp eax,0
+	je outresult
+	
+	outwordln eax
+	mov Res[ecx*4], eax
+		
 	inc ecx
+	add esi, 20		; движемся по массиву X с шагом 5( это OcenkaPopul@12 скачет через 5 ) * 4( генератор сл. работает с DD ) 
+
 	cmp cx,10			; от 0 до 9 ключительно
 	jne  equation_calc
  
  
+ 
+	jmp lexit
+	
+outresult:
+	push esi
+	call OutResult@4
 
+lexit:
+
+newline
 pause "press any key to exit"
 exit
 end start
