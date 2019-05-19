@@ -22,11 +22,13 @@ i=1,..,5
 
 include console.inc 
 
-extern  Random@0:near, Selection@0:near, Skreshiv@0:near, Mutation@0:near, Korni@0:near  ;внешние процедуры
+extern  PopulationGEN@4:near, Random_mid@0:near, Selection@0:near, Skreshiv@0:near, Mutation@0:near, OcenkaPopul@12:near  ;внешние процедуры
+
+ 
 
 .data
 N    DB ?			;размер начальной популяции в диапазоне  4<= N<= 10
-X    DB 5 DUP (?)		
+X    DD 50 DUP (?)		;берем только посдений байт, но место резервируем под полный DD
 A    DB 5 DUP (?)	;вводит пользователь
 D    DD ?			;вводит пользователь
 M    DB ?			;количество итераций
@@ -49,20 +51,46 @@ outstr "A4="					;запрос на ввод A4
 inintln [A+3]				
 outstr "A5="					;запрос на ввод A5
 inintln [A+4]				
-
- call Random@0
  
 outstr "введите D : "			;свободный член уравнени€ 
 inintln [D]				
 
-outstr "введите M :"
-inintln [M]
-
-outstr "введите K :"
-inintln [K]
-
-outstr "введите P :"
+outstr "введите M : "
+inintln [M]         
+                    
+outstr "введите K : "
+inintln [K]         
+                    
+outstr "введите P : "
 inintln  [P]
 
+
+ push offset X
+ 
+ call PopulationGEN@4
+  
+
+
+	mov ecx, 0			
+	lea esi, X			
+equation_calc:
+ 
+    push offset D		; параметры загружаютс€ в обратном пор€дке
+	push esi			
+	add esi, 20		; движемс€ по массиву X с шагом 5( это OcenkaPopul@12 скачет через 5 ) * 4( генератор сл. работает с DD ) 
+
+	push offset A
+
+	call OcenkaPopul@12
+	nop
+	inc ecx
+	cmp cx,10			; от 0 до 9 ключительно
+	jne  equation_calc
+ 
+ 
+
+pause "press any key to exit"
+exit
 end start
+
 
