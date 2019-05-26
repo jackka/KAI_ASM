@@ -1,224 +1,53 @@
 include console.inc    
 
-
-public PopulationGEN, Random_mid, Selection, Skreshiv, Mutation, OcenkaPopul
-
+public PopulationGEN, OcenkaPopul, Selection;, Skreshiv, Mutation, 
 
 
 .code
 
-;RANDOM В ДИАПАЗОНЕ 1...D
-;выбираем 10 вариантов случайных решений в диапазоне 1...D
-;	A11...A15
-;	...
-;	A51...A55
+PopulationGEN proc X:dword, rand:dword
 
-PopulationGEN proc X:dword
-
-
- M EQU 50
-local numA:DWORD
-local numM:DWORD
-local adrX:DWORD 
-local intN:DWORD 
-
+	local numA:DWORD
+	local numM:DWORD
+	
+	pusha
+	
 	mov numA, 48271
 	mov numM, 2147483647
 	
-	xor EAX,EAX
-	mov AL,M
+	mov edi, dword ptr [rand]
+	mov esi, dword ptr [X]
 	
-;	inintln AL					;присвоить AL введенное значение M<=10
+	mov ecx,0
+generate:
+	
+	mov eax, dword ptr [edi]
+								; РЅРёР¶Рµ РіРµРЅРµСЂРёС‚ РІРґРІРѕР№РЅРµ РёРЅС‚РµСЂРµСЃРЅРµРµ, РµСЃР»Рё РІС‹РїРѕР»РЅРёС‚СЊ Р°Р»РіРѕСЂРёС‚Рј Р±РѕР»СЊС€Рµ 1-РѕРіРѕ СЂР°Р·Р°.							
+	mul numA					; EAX=a * X(i-1) (СѓРјРЅРѕР¶Р°РµРј EAX РЅР° dword, СѓРєР°Р·Р°РЅРЅС‹Р№ РїРѕ Р°РґСЂРµСЃСѓ РІ numA=48271)
+	div numM					; a * X(i-1) mod m (РїРѕР»СѓС‡РµРЅРЅРѕРµ РїСЂРѕРёР·РІРµРґРµРЅРёРµ РІ EAX РґРµР»РёРј РЅР° dword, СѓРєР°Р·Р°РЅРЅРѕРіРѕ РїРѕ Р°РґСЂРµСЃСѓ РІ numM=2147483647)
+	mov eax,edx					; СЂР°Р·РјРµС‰Р°РµРј РІ EAX РїСЂРµРґС‹РґСѓС‰РµРµ РІС‹С‡РµСЃР»РµРЅРЅРѕРµ РїСЃРµРІРґРѕСЃР»СѓС‡Р°Р№РЅРѕРµ Р·РЅР°С‡РµРЅРёРµ
+	mul numA					; EAX=a * X(i-1) (СѓРјРЅРѕР¶Р°РµРј EAX РЅР° dword, СѓРєР°Р·Р°РЅРЅС‹Р№ РїРѕ Р°РґСЂРµСЃСѓ РІ numA=48271)
+	div numM					; a * X(i-1) mod m (РїРѕР»СѓС‡РµРЅРЅРѕРµ РїСЂРѕРёР·РІРµРґРµРЅРёРµ РІ EAX РґРµР»РёРј РЅР° dword, СѓРєР°Р·Р°РЅРЅРѕРіРѕ РїРѕ Р°РґСЂРµСЃСѓ РІ numM=2147483647)
+	
+	mov dword ptr [edi], edx
 
-;	mov byte ptr [M],AL			;по адресу [M] записываем значение размером байт из AL=M<=10
-
-comment &
-	outstr 'X['					; 
-	outint byte ptr [X]			;по адресу [X] размещен по умолчанию 0
-	outstr ']='					;вывод в консоль =
-	inint AL					;AL = значение X[0]
-	&
+	cmp dl,0
+	jz generate
 	
-	mov esi, X
-	mov byte ptr [esi],1			;по адресу первого элемента [X] записываем байт из AL = значение X[0]
+	mov byte ptr [esi+ecx],dl
 	
-    mov ECX,M					;инициализируем счетчик ECX=M
-	mov edi, X
-    lea ESI,[edi]					;загрузка адреса первого элемента X в ESI
 	
-    jmp Random_Calc
-
- After_Random_Calc: 
-    ;
-    newline
-	mov edi, X
-    lea ESI,[edi]				;загрузка адреса элемента X в ESI
 	
-    mov adrX,ESI				;adrX = адрес первого элемента X
-    mov EAX,M					;
-    mov intN,EAX				;intN = M		
-    nextX:						
-    mov EAX,M					;
-    sub EAX,intN				;EAX=M-intN
-    outstr 'X['
-	outint EAX
-	outstr ']='					;X[i]=
-    mov ESI,adrX				;присвоить ESI значение первого элемента X
-    mov EAX, dword ptr [ESI]	;размещаем в EAX значение размером dword с адреса, указанного в ESI
-    outwordln AL				;вывод значения X[i]
-    add adrX,4					;перепрыгнули в adrX через 4 байта
-    dec dword ptr [intN]
-    jnz nextX
-    ;
-	jmp exit_proc
+	inc ecx
+	cmp ecx,5
+	jne generate
 	
- Random_Calc:
-	dec ECX					;ECX-1 (ECX=M=размер массива)
-	jcxz return				;если cx=0 (введены все числа), то процедура заканчивается
-	next:					;если cx не равно 0
-	mov EAX,dword ptr[ESI]	;размещаем в EAX предыдущее значение (размером dword с адреса, указанного в ESI)
-	mul dword ptr [numA]	;EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
-	div dword ptr [numM]	;a * X(i-1) mod m (полученное произведение в EAX делим на dword, указанного по адресу в numM=2147483647)
-	
-	;	cmp EBX,D
-	;	ja next
-	
-	add ESI,4				;перепрыгнули в ESI через 4 байта
-	mov dword ptr[ESI],EDX	;положили по адресу ESI значение из EDX (a * X(i-1) mod m) размером dword
-	loop next				;на начало цикла
-	return:
-	jmp  After_Random_Calc
-
- exit_proc:
-
-	ret 4
+	popa
+	ret 8
 PopulationGEN endp
 
 
-
-Random_mid proc
-
- M2 EQU 1
-local X[M]:DWORD
-local numA:DWORD
-local numM:DWORD
-local adrX:DWORD 
-local intN:DWORD 
-
-	mov numA, 48271
-	mov numM, 2147483647
-	
-	xor EAX,EAX
-	mov AL,M
-	
-;	inintln AL					;присвоить AL введенное значение M<=10
-
-;	mov byte ptr [M],AL			;по адресу [M] записываем значение размером байт из AL=M<=10
-
-comment &
-	outstr 'X['					; 
-	outint byte ptr [X]			;по адресу [X] размещен по умолчанию 0
-	outstr ']='					;вывод в консоль =
-	inint AL					;AL = значение X[0]
-	&
-	mov byte ptr [X],1			;по адресу первого элемента [X] записываем байт из AL = значение X[0]
-	
-    mov ECX,M					;инициализируем счетчик ECX=M
-    lea ESI,X					;загрузка адреса первого элемента X в ESI
-	
-    jmp Random_Calc
-
- After_Random_Calc: 
-    ;
-    newline
-    lea ESI,X					;загрузка адреса элемента X в ESI 
-    mov adrX,ESI				;adrX = адрес первого элемента X
-    mov EAX,M					;
-    mov intN,EAX				;intN = M		
-    nextX:						
-    mov EAX,M					;
-    sub EAX,intN				;EAX=M-intN
-    outstr 'X['
-	outint EAX
-	outstr ']='					;X[i]=
-    mov ESI,adrX				;присвоить ESI значение первого элемента X
-    mov EAX, dword ptr [ESI]	;размещаем в EAX значение размером dword с адреса, указанного в ESI
-    outwordln AL				;вывод значения X[i]
-    add adrX,4					;перепрыгнули в adrX через 4 байта
-    dec dword ptr [intN]
-    jnz nextX
-    ;
-	jmp exit_proc
-	
- Random_Calc:
-	dec ECX					;ECX-1 (ECX=M=размер массива)
-	jcxz return				;если cx=0 (введены все числа), то процедура заканчивается
-	next:					;если cx не равно 0
-	mov EAX,dword ptr[ESI]	;размещаем в EAX предыдущее значение (размером dword с адреса, указанного в ESI)
-	mul dword ptr [numA]	;EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
-	div dword ptr [numM]	;a * X(i-1) mod m (полученное произведение в EAX делим на dword, указанного по адресу в numM=2147483647)
-	
-	;	cmp EBX,D
-	;	ja next
-	
-	add ESI,4				;перепрыгнули в ESI через 4 байта
-	mov dword ptr[ESI],EDX	;положили по адресу ESI значение из EDX (a * X(i-1) mod m) размером dword
-	loop next				;на начало цикла
-	return:
-	jmp  After_Random_Calc
-
- exit_proc:
-
-	ret
-Random_mid endp
-
-
-;СЕЛЕКЦИЯ
-;случайная схема
-;вычисляем D1...D5
-;расстояние Di-D
-;1/(Di-D)
-
-;коэффициенты выживаемости
-;       1/(D1-D)                      1/(D5-D)
-;  ______________________ ... ______________________
-;  1/(D1-D)+...+1/(D5-D)       1/(D1-D)+...+1/(D5-D)
-
-;выбор пяти пар родителей, у каждой пары один потомок, итого 5 новых решений
-; 10 000 сторонняя игральная кость, вероятности каждого родителя=fitness. КАК ВЫБРАТЬ НОВУЮ ПАРУ РОДИТЕЛЕЙ?
-
-Selection proc 
-
-	
-
-  	ret 
-Selection endp
-
-
-
-
-;СКРЕЩИВАНИЕ
-	
-Skreshiv proc			
-
-;выбирается часть, которыми будут обмениваться
-; ???РАЗДЕЛИТЕЛЬ НА ЛЮБОМ БИТЕ?
-	
-	ret
-Skreshiv endp
-
-
-;МУТАЦИЯ
-
-Mutation proc			
-
-;реверс одного бита
-	
-	ret
-Mutation endp
-
-
-;ВЫЧИСЛЕНИЕ
+;Р’Р«Р§РРЎР›Р•РќРР•
 	
 OcenkaPopul proc A:dword, X:dword, D:DWORD
 					
@@ -232,11 +61,11 @@ local xArray:dword
 	mov edi,dword ptr [X]
 	mov esi,dword ptr [A]
 	SummMul:
-
+	
 	
 	xor eax,eax
-	mov al,byte ptr [ecx+esi]		; готовим умножаемое в al
-	mov bl,byte ptr [ecx*4+edi]		; готовим множитель в bl
+	mov al,byte ptr [esi+ecx]		; РіРѕС‚РѕРІРёРј СѓРјРЅРѕР¶Р°РµРјРѕРµ РІ al
+	mov bl,byte ptr [edi+ecx]		; РіРѕС‚РѕРІРёРј РјРЅРѕР¶РёС‚РµР»СЊ РІ bl
 	
 	mul bl
 	
@@ -245,9 +74,8 @@ local xArray:dword
 	inc ecx
 	cmp ecx,5
 	jne SummMul
-	
+
 	mov edx,dword ptr [D]
-	mov edx,[edx]
 	sub SumOfMul,edx
 	
 	popa
@@ -256,15 +84,183 @@ local xArray:dword
 OcenkaPopul endp
 
 
-;ВЫВОД РЕЗУЛЬТАТА
+;РЎР•Р›Р•РљР¦РРЇ
+
+Selection proc Res: DWORD, X:dword, Sel:dword, N:dword, rand:dword
+
+local lrand:dword
+local LenMOne:byte
+local numA:DWORD
+local numM:DWORD
+local divTheOne:DWORD
+local divres:dword
+local divider:dword
+local divhelper:dword
+local divloop:byte;
+
+	pusha
+	mov edx,dword ptr [rand]
+	mov edx,dword ptr [edx]
+	mov lrand,edx
+	
+	mov al,byte ptr [N]
+	mov LenMOne,al
+	mov ebx,0
+
+    l4:
+	mov esi,dword ptr [Res]
+	mov esi,dword ptr [esi+ebx*4]
+    mov divider,esi
+	
+	mov divTheOne,1
+	mov divres,0
+	mov ecx,0
+	
+	l3: inc ecx						; РґРµР»РµРЅРёРµ СЃС‚РѕР»Р±РёРєРѕРј 1/res[i]
+	mov eax, divTheOne
+	cdq
+	idiv divider
+	mov divhelper,eax
+	test eax,eax
+	jz  l1
+	mov edx,divhelper
+	mov eax,divider
+	imul eax,edx
+	sub divTheOne,eax
+	mov eax,divTheOne
+	imul eax,eax,0ah
+	mov divTheOne,eax
+	jmp l2
+	l1: mov eax,divTheOne
+	imul eax,eax,0ah
+	mov divTheOne,eax
+	l2: mov eax,divres
+	imul eax,eax,0ah
+	add eax,divhelper
+	mov divres,eax
+	cmp cl,5
+	jl l3
+
+	
+	mov edi,divres
+	
+	mov esi,dword ptr [Res]
+	mov dword ptr [esi+ebx*4],edi
+	
+	inc bl
+	cmp bl,LenMOne
+	jl l4
+
+
+	mov al,byte ptr [N]
+	dec al
+	mov LenMOne,al
+	
+								;СЃРѕСЂС‚РёСЂРѕРІРєР° РїРѕ Res РјРµС‚РѕРґРѕРј РїСѓР·С‹СЂСЊРєР° ( РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ СЃРѕСЂС‚РёСЂРѕРІРєРѕР№ РїРµСЂРµРјРµС‰Р°СЋС‚СЃСЏ РїСЏС‚РµСЂРєРё РёР· X )
+								
+    mov esi,dword ptr [Res]    	;РїРѕР·РёС†РёРѕРЅРёСЂСѓРµРјСЃСЏ РЅР° РјР°СЃСЃРёРІ
+	mov edi,dword ptr [X]   	;РїРѕР·РёС†РёРѕРЅРёСЂСѓРµРјСЃСЏ РЅР° РјР°СЃСЃРёРІ
+a2:    
+	xor ecx,ecx
+	mov cl,LenMOne    
+    xor ebx,ebx        		;С„Р»Р°Рі вЂ“ Р±С‹Р»Рё/РЅРµ Р±С‹Р»Рё РїРµСЂРµСЃС‚Р°РЅРѕРІРєРё РІ РїСЂРѕС…РѕРґРµ
+a3: 
+	mov eax,[esi+ecx*4-4]		;РїРѕР»СѓС‡Р°РµРј Р·РЅР°С‡РµРЅРёРµ РѕС‡РµСЂРµРґРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°    
+    cmp [esi+ecx*4],eax    	;СЃСЂР°РІРЅРёРІР°РµРј СЃРѕ Р·РЅР°С‡РµРЅРёРµРј СЃРѕСЃРµРґРЅРµРіРѕ СЌР»РµРјРµРЅС‚Р°
+    jnb a4    				;РµСЃР»Рё Р±РѕР»СЊС€Рµ РёР»Рё СЂР°РІРµРЅ - РёРґРµРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ СЌР»РµРјРµРЅС‚Сѓ
+    setna bl    			;Р±С‹Р»Р° РїРµСЂРµСЃС‚Р°РЅРѕРІРєР° - РІР·РІРѕРґРёРј С„Р»Р°Рі
+    xchg eax,[esi+ecx*4]		;РјРµРЅСЏРµРј Р·РЅР°С‡РµРЅРёРµ СЌР»РµРјРµРЅС‚РѕРІ РјРµСЃС‚Р°РјРё
+    mov [esi+ecx*4-4],eax
+							;РјРµРЅСЏРµРј РјРµСЃС‚Р°РјРё СЃРѕРѕС‚РІРµС‚СЃРІСѓСЋС‰РёРµ РїСЏС‚РµСЂРєРё РёР· X
+
+	mov eax,5
+	mul cl
+	push [edi+eax]  			;4 Р±Р°Р№С‚Р° 
+	push [edi+eax+4] 			;1 Р±Р°Р№С‚
+
+	push [edi+eax-5] 			;4 Р±Р°Р№С‚Р° 
+	push [edi+eax-1] 			;1 Р±Р°Р№С‚
+	
+	pop edx
+	mov byte ptr [edi+eax+4],dl	;1 Р±Р°Р№С‚ РІР·СЏС‚СЊ РёР· СЃС‚РµРєР° РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ С‚Р°Рє
+	pop [edi+eax] 				;4 Р±Р°Р№С‚Р° 
+
+	pop edx
+	mov byte ptr [edi+eax-1],dl	;1 Р±Р°Р№С‚ РІР·СЏС‚СЊ РёР· СЃС‚РµРєР° РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ С‚Р°Рє
+	pop [edi+eax-5]				;4 Р±Р°Р№С‚Р° 
+
+	
+a4: 
+	loop a3    				;РґРІРёРіР°РµРјСЃСЏ РІРІРµСЂС… РґРѕ РіСЂР°РЅРёС†С‹ РјР°СЃСЃРёРІР°
+    add esi,4    			;СЃРґРІРёРіР°РµРј РіСЂР°РЅРёС†Сѓ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅРѕРіРѕ РјР°СЃСЃРёРІР°
+	add edi,5				;Рё РїРѕР·РёС†РёСЋ РІ Р±РѕР»СЊС€РѕРј РјР°СЃСЃРёРІРµ
+    dec ebx    				;РїСЂРѕРІРµСЂСЏРµРј Р±С‹Р»Рё Р»Рё РїРµСЂРµСЃС‚Р°РЅРѕРІРєРё
+    jnz finsort    				;РµСЃР»Рё РїРµСЂРµСЃС‚Р°РЅРѕРІРѕРє РЅРµ Р±С‹Р»Рѕ - Р·Р°РєР°РЅС‡РёРІР°РµРј СЃРѕСЂС‚РёСЂРѕРІРєСѓ
+    dec LenMOne        		;СѓРјРµРЅСЊС€Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹С… СЌР»РµРјРµРЅС‚РѕРІ
+    jnz a2					;РµСЃР»Рё РµСЃС‚СЊ РµС‰Рµ РЅРµРѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹ - РЅР°С‡РёРЅР°РµРј РЅРѕРІС‹Р№ РїСЂРѕС…РѕРґ
+	
+	
+finsort:					; РєРѕРЅРµС† СЃРѕСЂС‚РёСЂРѕРІРєРё
+
+
+							;РґР°Р»РµРµ, РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ С‚РѕРіРѕ СЃРєРѕР»СЊРєРѕ РѕСЃРѕР±РµР№ K Р·Р°РґР°РЅС‹ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј РЅР° СЃРєСЂРµС‰РёРІР°РЅРёРµ 
+							;РїСЂРѕРІРѕРґРёРј СЃРµР»РµРєС†РёСЋ СЃР»СѓС‡Р°Р№РЅРѕ РІС‹Р±РёСЂР°СЏ РёР· СЂР°Р·РІРµСЂРЅСѓС‚С‹С… С‡РµСЂРµР· 1 Рё РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹С… РїРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ СЂР°Р·РЅРѕСЃРµР№ Di-D.
+							;
+							;Р·Р°РїРѕР»РЅСЏРµРј СЃР»СѓС‡Р°Р№РЅС‹РјРё С‡РёСЃР»Р°РјРё РёР· РґРёР°РїР°Р·РѕРЅР° РѕС‚ 1..Рљ РјР°СЃСЃРёРІ СЂР°Р·РјРµСЂРѕРј 1..20 (10 РјР°Рј + 10 РїР°Рї), Р° Р±СЂР°С‚СЊ Р±СѓРґРµРј N РїР°Рї Рё N РјР°Рј
+comment &								
+	mov numA, 48271	
+	mov numM, 2147483647	
+	mov esi,dword ptr [Sel] 	; РїРѕР·РёС†РёРѕРЅРёСЂСѓРµРјСЃСЏ РЅР° РјР°СЃСЃРёРІ
+	mov ecx, 20			    	; СЂР°Р·РјРµСЂ РјР°СЃСЃРёРІР° СЃРµР»РµРєС†РёРё 20 РѕС‚ 0..19
+	
+	mov edx,lrand 				; РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РіРµРЅРµСЂР°С‚РѕСЂР°
+		
+	next:		
+		
+	mov eax,edx					;СЂР°Р·РјРµС‰Р°РµРј РІ EAX РїСЂРµРґС‹РґСѓС‰РµРµ РІС‹С‡РµСЃР»РµРЅРЅРѕРµ РїСЃРµРІРґРѕСЃР»СѓС‡Р°Р№РЅРѕРµ Р·РЅР°С‡РµРЅРёРµ
+	mul numA					;EAX=a * X(i-1) (СѓРјРЅРѕР¶Р°РµРј EAX РЅР° dword, СѓРєР°Р·Р°РЅРЅС‹Р№ РїРѕ Р°РґСЂРµСЃСѓ РІ numA=48271)
+	div numM					;a * X(i-1) mod m (РїРѕР»СѓС‡РµРЅРЅРѕРµ РїСЂРѕРёР·РІРµРґРµРЅРёРµ РІ EAX РґРµР»РёРј РЅР° dword, СѓРєР°Р·Р°РЅРЅРѕРіРѕ РїРѕ Р°РґСЂРµСЃСѓ РІ numM=2147483647)
+								; EDX =  (a * X(i-1) mod m)
+								
+								;РґРѕР»Р¶РЅРѕ РѕСЃС‚Р°С‚СЊСЃСЏ Р·РЅР°С‡РµРЅРёРµ РѕС‚ 0 РґРѕ 6, С‡С‚Рѕ Р±СѓРґРµС‚ СЃРµР»РµРєС†РёРµР№ РёР· 7 РѕСЃС‚Р°РІС€РёС…СЃСЏ СЂРѕРґРёС‚РµР»РµР№ 
+	
+	mov bl,dl
+	and bl,00000111b
+	dec bl
+	cmp bl,6
+	ja zerol
+	jmp nzerol
+zerol:
+	mov byte ptr[ESI+ECX-1],00000110b	; Р·Р°РїРѕР»РµРЅРёРµ РјР°СЃСЃРёРІР° СЃ РєРѕРЅС†Р°
+nzerol:	
+	mov byte ptr[ESI+ECX-1],bl	; Р·Р°РїРѕР»РµРЅРёРµ РјР°СЃСЃРёРІР° СЃ РєРѕРЅС†Р°
+	
+
+	loop next					;РЅР° РЅР°С‡Р°Р»Рѕ С†РёРєР»Р°
+	
+	
+	return:
+&
+
+	mov edx,dword ptr[rand]
+	mov eax,lrand				;РІРѕР·РІСЂР°С‰Р°РµРј С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЃР»СѓС‡Р°Р№РЅРѕРіРѕ РґР°С‚С‡РёРєР°
+	mov dword ptr[edx],eax
+	
+	popa
+  	ret 20
+Selection endp
+
+
+;Р’Р«Р’РћР” Р Р•Р—РЈР›Р¬РўРђРўРђ
 
 OutResult proc X:dword		
 
 	pusha
 	mov edi,dword ptr [X]
+
 	
 	newline
-	outstrln "полученное решение:"
+	outstrln "РїРѕР»СѓС‡РµРЅРѕ СЂРµС€РµРЅРёРµ:"
 	outstr "X1="
 	outwordln byte ptr [edi]
 	outstr "X2="
@@ -280,5 +276,7 @@ OutResult proc X:dword
 	ret 4
 OutResult endp
 
-end
 
+
+
+end
