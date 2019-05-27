@@ -17,12 +17,12 @@ i=1,..,5
 основной
 в тестовом режиме программа выводит на экран попул€цию решений, получаемую на каждом шаге работы алгоритма. 
 в основном режиме выводитс€ только решение, значение функции (нев€зка уравнени€, котора€ в идеале должна обращатьс€ в ноль) и количество сделанных итераций.
-все шаги алгоритма (генерация начальной популяции, селекция, скрещивание, мутаци€, вычисление целевой функции), должны быть реализованы в виде отдельных процедур.
+все шаги алгоритма (генерация начальной популяции, селекци€, скрещивание, мутаци€, вычисление целевой функции), должны быть реализованы в виде отдельных процедур.
 &
 
 include console.inc 
 
-extern  PopulationGEN@8:near, OcenkaPopul@12:near, OutResult@4:near, Selection@20:near;, Skreshiv@8:near, Mutation@4:near  ;внешние процедуры
+extern  PopulationGEN@8:near, OcenkaPopul@12:near, OutResult@4:near, Selection@20:near, Mutation@12:near;, Skreshiv@8:near,  ;внешние процедуры
 
 
 .data
@@ -31,7 +31,7 @@ X    DB 50 DUP (?)	;корни - генерируютс€ алгоритмом
 Xbuf DD 50 DUP (?)	;буфер дл€ скрещивани€ 
 A    DB 5 DUP (?)	;вводит пользователь
 D    DD ?			;вводит пользователь
-M    DB ?			;количество итераций
+M    DD ?			;количество итераций
 K    DB ?			;количество скрещиваемых особей
 P    DB ?			;вероятность мутации (1/p)
 
@@ -40,7 +40,7 @@ Mode db ?			;режим работы
 Res  DD 10 DUP (?)	;результаты вычилени€ уравнений
 Sel	 DB 20 DUP (?)	;результаты селекции
 
-comCount db	?		;основной цикл
+comCount dd	?		;основной цикл
 rand DD ?
 
 
@@ -79,26 +79,24 @@ inintln [P]
 
 
 	
-	mov dword ptr [rand],1
+	mov dword ptr [rand],01h
 	
 	mov ecx,0
 	mov esi, offset X 
 PopGen:
 	
-	mov eax, offset [rand]
-	push eax
+	push  offset rand
 	push esi
 
 	call PopulationGEN@8	
+
 
 	add esi, 5
 	inc cl
 	cmp cl,byte ptr [N]
 	jne PopGen
 	
-	
-	mov al,byte ptr [M]
-	mov byte ptr [comCount],al
+	mov byte ptr [comCount],0
 iteratioins:
 	
 	
@@ -122,7 +120,10 @@ equation_calc:
 	jnz ComMode
 	
 	newline
-	outstrln "проверка решений"
+	outstr "отладка. итер.: "
+	outint comCount
+	outstr " "
+	outchar 9
 	outstr "X1="
 	outword byte ptr [esi]
 	outchar 9
@@ -162,15 +163,24 @@ ComMode:
 	call Selection@20
 
 
-;	Mutation
-	
+	nop
+	xor eax,eax
+	mov al, byte ptr [N] 			;передаетс€ по ссылке
+    push eax
+	xor eax,eax
+	mov al, byte ptr [P]			;передаетс€ непосредственным значением
+	push offset rand
+	push offset X
+
+	call Mutation@12
+
 ;	Skreshiv
 
-
-	inc byte ptr [comCount]
-	mov al,byte ptr [comCount]
-	cmp byte ptr [comCount],al
-	jne iteratioins						
+	
+	inc dword ptr [comCount]
+	mov eax,dword ptr [M]
+	cmp dword ptr [comCount],eax
+	jl iteratioins						
 	
 
 	newline
