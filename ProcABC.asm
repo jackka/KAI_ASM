@@ -281,7 +281,7 @@ k2:
 	jg k3 
 	
 	
-	mov byte ptr[ESI+ECX],al	; с нул€ начинаюс€ индексы в селекционном массиве с esi
+	mov byte ptr[ESI+ECX],al		; с нул€ начинаюс€ индексы в селекционном массиве с esi
 	jmp k4
 k3:	
 	inc al
@@ -292,6 +292,9 @@ k4:
 	inc cl
 	cmp cl,20
 	jl next
+	
+	
+	
 	
 	
 	mov edx,dword ptr[rand]
@@ -529,7 +532,7 @@ OutResult proc X:dword
 	outstr "X5="       
 	outword byte ptr [edi+4]
 	outchar 9
-	outstr "Res-D=0"
+	outstr "res-D 0"
 
 
 	

@@ -99,7 +99,14 @@ PopGen:
 	mov comCount,1
 iteratioins:
 	
-	
+	cmp byte ptr [Mode],0
+	jnz ComMode0
+	newline
+	outint comCount
+	outchar 9
+	outstrln "итереция.  X1..X5 перем.   расст. до решения"
+	newline
+ComMode0:
 	
 	mov ecx,0
 	mov esi, offset X
@@ -119,27 +126,22 @@ equation_calc:
 	cmp byte ptr [Mode],0
 	jnz ComMode
 	
-	newline
-	outstr "отладка. итер.: "
-	outint comCount
 	outstr " "
-	outchar 9
-	outstr "X1="
 	outword byte ptr [esi]
 	outchar 9
-	outstr "X2="
+	outstr " "
 	outword byte ptr [esi+1]
 	outchar 9
-	outstr "X3="
+	outstr " "
 	outword byte ptr [esi+2]
 	outchar 9
-	outstr "X4="
+	outstr " "
 	outword byte ptr [esi+3]
 	outchar 9
-	outstr "X5="
+	outstr " "
 	outword byte ptr [esi+4]
 	outchar 9
-	outstr "Res-D="
+	outstr " res-D "
 	outwordln eax
 
 
