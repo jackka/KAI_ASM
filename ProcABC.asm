@@ -431,16 +431,16 @@ a1:
 	mov lrand, edx
 	
 	and dl,7					; отбор значения для случайного номера бита в скрещивании
-
+	nop
 	xor ebx,ebx
 	mov bl, byte ptr [edi+ecx*2]
-	mov eax,20
+	mov eax,5
 	mul bl
 	mov bl, byte ptr [esi+eax]
 	mov byte ptr [exchvar1], bl
 	
 	mov bl, byte ptr [edi+ecx*2+1]
-	mov eax,20
+	mov eax,5
 	mul bl
 	mov bl, byte ptr [esi+eax]
 	mov byte ptr [exchvar2], bl
@@ -465,17 +465,17 @@ a1:
    
    	xor ebx,ebx
 	mov bl, byte ptr [edi+ecx*2]
-	mov eax,20
+	mov eax,5
 	mul bl
 	mov bl, byte ptr [exchvar1]
-	mov byte ptr [esi+ebx],bl
+	mov byte ptr [esi+eax],bl
 
 	
 	mov bl, byte ptr [edi+ecx*2+1]
-	mov eax,20
+	mov eax,5
 	mul bl
 	mov bl,byte ptr [exchvar2]
-   	mov byte ptr [esi+ebx],bl
+   	mov byte ptr [esi+eax],bl
 	
 		
 	pop ecx	
