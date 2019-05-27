@@ -22,7 +22,7 @@ i=1,..,5
 
 include console.inc 
 
-extern  PopulationGEN@8:near, OcenkaPopul@12:near, OutResult@4:near, Selection@20:near, Mutation@12:near;, Skreshiv@8:near,  ;внешние процедуры
+extern  PopulationGEN@8:near, OcenkaPopul@12:near, OutResult@4:near, Selection@20:near, Mutation@12:near, Skreshiv@12:near  ;внешние процедуры
 
 
 .data
@@ -96,7 +96,7 @@ PopGen:
 	cmp cl,byte ptr [N]
 	jne PopGen
 	
-	mov byte ptr [comCount],0
+	mov comCount,1
 iteratioins:
 	
 	
@@ -163,7 +163,6 @@ ComMode:
 	call Selection@20
 
 
-	nop
 	xor eax,eax
 	mov al, byte ptr [N] 			;передается по ссылке
     push eax
@@ -174,13 +173,18 @@ ComMode:
 
 	call Mutation@12
 
-;	Skreshiv
+	xor eax,eax
+	mov al,byte ptr [K] 
+	push offset rand
+	push offset X
+	push offset Sel
+	call Skreshiv@12
 
 	
 	inc dword ptr [comCount]
 	mov eax,dword ptr [M]
 	cmp dword ptr [comCount],eax
-	jl iteratioins						
+	jna iteratioins						
 	
 
 	newline
@@ -191,6 +195,7 @@ ComMode:
 	jmp lexit
 	
 outresult:
+	mov eax,dword ptr [comCount]
 	push esi
 	call OutResult@4
 

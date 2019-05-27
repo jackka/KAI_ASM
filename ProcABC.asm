@@ -279,6 +279,8 @@ k2:
 	pop ebx							; восстанавливаем eax
 	cmp ebx,rangesum
 	jg k3 
+	
+	
 	mov byte ptr[ESI+ECX],al	; с нуля начинаюся индексы в селекционном массиве с esi
 	jmp k4
 k3:	
@@ -339,8 +341,6 @@ Mutation proc	X:dword, rand:dword, N:dword
 	
 
 	mov esi, dword ptr [X]
-	nop
-	nop
 	mov ecx,0				
 a1: 
 	mov eax, lrand
@@ -363,7 +363,7 @@ a1:
 
 rev:
 	xor byte ptr [esi+ecx],bl
-	jz	rev						; вернуть обратно если получился ноль
+	jz	rev						; вернуть обратно, если в результате мутации получился ноль
 nextPair:						; предыдущий ген избежал мутации
 	
 	inc ecx
@@ -392,11 +392,12 @@ Mutation endp
 
 ;СКРЕЩИВАНИЕ
 	
-Skreshiv proc	Sel:dword, X:dword, 
+Skreshiv proc	Sel:dword, X:dword, rand:dword
 	
 ;выбирается часть, которыми будут обмениваться
-; ???РАЗДЕЛИТЕЛЬ НА ЛЮБОМ БИТЕ?
-	local prevRandom:dword
+	
+	local K:byte
+	local lrand:dword
 	local numA:DWORD
 	local numM:DWORD
 	local exchvar1:dword
@@ -410,10 +411,16 @@ Skreshiv proc	Sel:dword, X:dword,
 	mov esi, dword ptr [X]
 	mov edi, dword ptr [Sel]
 	
+	mov edx,dword ptr [rand]
+	mov edx,dword ptr [edx]
+	mov lrand,edx
+	
+	mov K,al
+	
 	mov ecx,0
 a1:
 	
-	mov eax, dword ptr [prevRandom]
+	mov eax, lrand
 								; 2-а повтра для лучшего начального смешивания.							
 	mul numA					; EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
 	div numM					; a * X(i-1) mod m (полученное произведение в EAX делим на dword, указанного по адресу в numM=2147483647)
@@ -421,10 +428,10 @@ a1:
 	mul numA					; EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
 	div numM		
 	
-	mov dword ptr [prevRandom], edx
+	mov lrand, edx
 	
 	and dl,7					; отбор значения для случайного номера бита в скрещивании
-;nop
+
 	xor ebx,ebx
 	mov bl, byte ptr [edi+ecx*2]
 	mov eax,20
@@ -440,6 +447,7 @@ a1:
 
 	
 	push ecx					; сохраняем счетчик пар, так как использовать в сдвиге sh(l/r) можно только регистр ecx
+	
     mov cl,dl
 	mov al,1
     shl al,cl					; в al маска для обмена
@@ -469,14 +477,20 @@ a1:
 	mov bl,byte ptr [exchvar2]
    	mov byte ptr [esi+ebx],bl
 	
-	
+		
 	pop ecx	
+	inc cl
+	cmp cl,K
+	jl a1
 	
-	cmp ecx,10
-	jne a1
+	
+	mov edx,dword ptr[rand]
+	mov eax,lrand				;возвращаем текущее состояние случайного датчика
+	mov dword ptr[edx],eax
+	
 	
 	popa
-	ret 8
+	ret 12
 Skreshiv endp
 
 
@@ -515,8 +529,8 @@ OutResult proc X:dword
 	outstr "X5="       
 	outword byte ptr [edi+4]
 	outchar 9
-	outstr "Res-D="
-	outwordln eax
+	outstr "Res-D=0"
+
 
 	
 	popa
