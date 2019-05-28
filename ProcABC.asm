@@ -124,41 +124,41 @@ local submask:dword;
 	mov ebx,0							;ebx=0
 
     l4:
-	mov esi,dword ptr [Res]				;esi=адрес Res
-	mov esi,dword ptr [esi+ebx*4]		;
-    mov divider,esi
+	mov esi,dword ptr [Res]				;esi=адрес Res[i]
+	mov esi,dword ptr [esi+ebx*4]		;прыгаем на Res[i+1]
+    mov divider,esi						;divider=esi=Res[i+1]
 	
-	mov divTheOne,1
+	mov divTheOne,1					
 	mov divres,0
 	mov ecx,0
 	
-	l3: inc ecx						; деление столбиком 1/res[i]
-	mov eax, divTheOne
-	cdq
-	idiv divider
-	mov divhelper,eax
-	test eax,eax
-	jz  l1
-	mov edx,divhelper
-	mov eax,divider
-	imul eax,edx
-	sub divTheOne,eax
+	l3: inc ecx						;берем 7 цифр после запятой
+	mov eax, divTheOne				;eax=1
+	cdq								;для получения положительного результата от деления
+	idiv divider					;divider=esi=Res[i+1]/eax
+	mov divhelper,eax				;divhelper=целое от деления Res[i+1]/eax
+	test eax,eax					;
+	jz  l1							;если 0, переход на 11
+	mov edx,divhelper				;edx=divhelper=целое от деления Res[i+1]/eax
+	mov eax,divider					;eax=divider=esi=Res[i+1]/eax
+	imul eax,edx					;					
+	sub divTheOne,eax				;divTheOne=divTheOne-eax
 	mov eax,divTheOne
-	imul eax,eax,0ah
-	mov divTheOne,eax
+	imul eax,eax,0ah				;eax=eax*10
+	mov divTheOne,eax				;divTheOne=eax=eax*10
 	jmp l2
 	l1: mov eax,divTheOne
 	imul eax,eax,0ah
 	mov divTheOne,eax
-	l2: mov eax,divres
-	imul eax,eax,0ah
-	add eax,divhelper
-	mov divres,eax
+	l2: mov eax,divres				;eax=0
+	imul eax,eax,0ah				;eax=eax*10
+	add eax,divhelper				;eax=eax+divhelper(целое от деления Res[i+1]/eax)
+	mov divres,eax					;divres=eax=eax+divhelper(целое от деления Res[i+1]/eax)
 	cmp cl,7
 	jl l3
 
 	
-	mov edi,divres
+	mov edi,divres					;edi=divres=eax=eax+divhelper(целое от деления Res[i+1]/eax)
 	
 	mov esi,dword ptr [Res]			; сохраняем обращение через единицу затирая результат Di-D, так как для дальнешей селекции он нам уже не нужен
 	mov dword ptr [esi+ebx*4],edi
@@ -167,65 +167,13 @@ local submask:dword;
 	cmp bl,LenMOne
 	jl l4
 
-
-	mov al,byte ptr [N]
-	dec al
-	mov LenMOne,al
-	
-								;сортировка по Res методом пузырька ( в соответствии с сортировкой перемещаются пятерки из X )
-								
-    mov esi,dword ptr [Res]    	;позиционируемся на массив
-	mov edi,dword ptr [X]   	;позиционируемся на массив
-a2:    
-	xor ecx,ecx
-	mov cl,LenMOne    
-    xor ebx,ebx        		;флаг – были/не были перестановки в проходе
-a3: 
-	mov eax,[esi+ecx*4-4]		;получаем значение очередного элемента    
-    cmp [esi+ecx*4],eax    	;сравниваем со значением соседнего элемента
-    jnb a4    				;если больше или равен - идем к следующему элементу
-    setna bl    			;была перестановка - взводим флаг
-    xchg eax,[esi+ecx*4]		;меняем значение элементов местами
-    mov [esi+ecx*4-4],eax
-							;меняем местами соответсвующие пятерки из X
-
-	mov eax,5
-	mul cl
-	push [edi+eax]  			;4 байта 
-	push [edi+eax+4] 			;1 байт
-
-	push [edi+eax-5] 			;4 байта 
-	push [edi+eax-1] 			;1 байт
-	
-	pop edx
-	mov byte ptr [edi+eax+4],dl	;1 байт взять из стека можно только так
-	pop [edi+eax] 				;4 байта 
-
-	pop edx
-	mov byte ptr [edi+eax-1],dl	;1 байт взять из стека можно только так
-	pop [edi+eax-5]				;4 байта 
-
-	
-a4: 
-	loop a3    				;двигаемся вверх до границы массива
-    add esi,4    			;сдвигаем границу отсортированного массива
-	add edi,5				;и позицию в большом массиве
-    dec ebx    				;проверяем были ли перестановки
-    jnz finsort    				;если перестановок не было - заканчиваем сортировку
-    dec LenMOne        		;уменьшаем количество неотсортированных элементов
-    jnz a2					;если есть еще неотсортированные элементы - начинаем новый проход
-	
-	
-finsort:					; конец сортировки
+									;далее, в зависимости от того сколько особей K заданы пользователем на скрещивание 
+									;проводим селекцию случайно выбирая из развернутых через 1 и отсортированных по возрастанию разносей Di-D.
+									;
+									;заполняем случайными числами из диапазона от 1..К массив размером 1..20 (10 мам + 10 пап), а брать будем N пап и N мам
 
 
-							;далее, в зависимости от того сколько особей K заданы пользователем на скрещивание 
-							;проводим селекцию случайно выбирая из развернутых через 1 и отсортированных по возрастанию разносей Di-D.
-							;
-							;заполняем случайными числами из диапазона от 1..К массив размером 1..20 (10 мам + 10 пап), а брать будем N пап и N мам
-
-
-							; вычисляем сумму результатов обращения через 1 (1/Di-D)
+									; вычисляем сумму результатов обращения через 1 (1/Di-D)
 	mov divsum,0
 	mov ecx,0
 	mov esi,dword ptr [Res]
@@ -235,7 +183,7 @@ k1:	mov edi,dword ptr [esi+ecx*4]
 	cmp cl,byte ptr [N]
 	jl k1
 	
-	mov ebx,divsum 				;заполнение старшим битом всех разрядов справа для маски случайного числа
+	mov ebx,divsum 					;заполнение старшим битом всех разрядов справа для маски случайного числа
 	mov eax,ebx
 	shr ebx,1
 	or	ebx,eax
@@ -251,7 +199,7 @@ k1:	mov edi,dword ptr [esi+ecx*4]
 	mov eax,ebx
 	shr ebx,16
 	or	ebx,eax
-	mov submask,ebx							; маска в submask 
+	mov submask,ebx					; маска в submask 
 	
 
 	mov esi,dword ptr [Sel] 	; позиционируемся на массив
@@ -408,58 +356,58 @@ Skreshiv proc	Sel:dword, X:dword, rand:dword
 	
 	pusha
 	
-	mov numA, 48271	
-	mov numM, 2147483647
+	mov numA, 48271				;numA=48271
+	mov numM, 2147483647		;numM=2147483647
 	
-	mov esi, dword ptr [X]
-	mov edi, dword ptr [Sel]
+	mov esi, dword ptr [X]		;esi=массив X
+	mov edi, dword ptr [Sel]	;edi=массив Sel
 	
-	mov edx,dword ptr [rand]
+	mov edx,dword ptr [rand]	;edx=rand
 	mov edx,dword ptr [edx]
-	mov lrand,edx
+	mov lrand,edx				;lrand=edx=rand
 	
-	mov K,al
+	mov K,al					;K=al=значение N
 	
-	mov ecx,0
+	mov ecx,0					;ecx=0
 a1:
 	
-	mov eax, lrand
-								; 2-а повтра для лучшего начального смешивания.							
-	mul numA					; EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
-	div numM					; a * X(i-1) mod m (полученное произведение в EAX делим на dword, указанного по адресу в numM=2147483647)
-	mov eax,edx					; размещаем в EAX предыдущее вычесленное псевдослучайное значение
-	mul numA					; EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
-	div numM		
+	mov eax, lrand					;eax=lrand=edx=rand
+									; два повтора для лучшего начального смешивания.							
+	mul numA						; EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
+	div numM						; a * X(i-1) mod m (полученное произведение в EAX делим на dword, указанного по адресу в numM=2147483647)
+	mov eax,edx						;EAX=rand[i-1]
+	mul numA						;EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
+	div numM						;edx=
 	
-	mov lrand, edx
+	mov lrand, edx					;lrand=edx=rand[i-1]
 	
-	and dl,7					; отбор значения для случайного номера бита в скрещивании
+	and dl,7						;выбор трех последних бит из dl=rand[i], отбор значения для случайного номера бита в скрещивании
 	nop
 	xor ebx,ebx
-	mov bl, byte ptr [edi+ecx*2]
-	mov eax,5
-	mul bl
-	mov bl, byte ptr [esi+eax]
-	mov byte ptr [exchvar1], bl
+	mov bl, byte ptr [edi+ecx*2]	;bl=sel[i+ecx*2]
+	mov eax,5						;eax=5
+	mul bl							;eax=sel[i+ecx*2]*5
+	mov bl, byte ptr [esi+eax]		;bl=массив X
+	mov byte ptr [exchvar1], bl		;exchvar1=bl=массив X
 	
-	mov bl, byte ptr [edi+ecx*2+1]
-	mov eax,5
-	mul bl
-	mov bl, byte ptr [esi+eax]
-	mov byte ptr [exchvar2], bl
+	mov bl, byte ptr [edi+ecx*2+1]	;bl=sel
+	mov eax,5						;eax=5
+	mul bl							;al=bl(sel)*5
+	mov bl, byte ptr [esi+eax]		;bl=массив X
+	mov byte ptr [exchvar2], bl		;exchvar2=bl=массив X
 
 	
 	push ecx					; сохраняем счетчик пар, так как использовать в сдвиге sh(l/r) можно только регистр ecx
 	
-    mov cl,dl
-	mov al,1
-    shl al,cl					; в al маска для обмена
+    mov cl,dl					;cl=три последние бита из dl=rand[i]				
+	mov al,1					; al=1
+    shl al,cl					; al=маска (сдвинули 1 на число бит из cl=три последние бита из dl=rand[i])
 	
-    mov bl,al
-    mov cl,al
-    and al,byte ptr [exchvar1]	
-    mov dl,byte ptr [exchvar2]
-    not bl
+    mov bl,al					;bl=маска
+    mov cl,al					;cl=маска
+    and al,byte ptr [exchvar1]	;наложили маску на X[i]
+    mov dl,byte ptr [exchvar2]	;dl=байт из 
+    not bl						;bl=инвертированная маска
     and byte ptr [exchvar2],bl  
     or  byte ptr [exchvar2],al
     and cl,dl

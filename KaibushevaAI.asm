@@ -120,7 +120,7 @@ equation_calc:
 	call OcenkaPopul@12
 	
 	
-	cmp eax,0			; решение найдено eax=SumOfMul
+	cmp eax,0			; решение найдено eax=SumOfMul=отклонение
 	je outresult		; идти на вывод и выход
 	
 	cmp byte ptr [Mode],0
@@ -147,7 +147,7 @@ equation_calc:
 
 ComMode:										;если выбран основной режим
 
-	mov dword ptr [ecx*4+Res], eax				;в массив Res=eax=res-D
+	mov dword ptr [ecx*4+Res], eax				;в массив Res=eax=res-D=отклонение
 	
 	add esi, 5									;перепрыгнули в ESI на следующую пятерку
 	inc cl
@@ -182,7 +182,7 @@ ComMode:										;если выбран основной режим
 	push offset Sel
 	call Skreshiv@12
 
-	
+;вывод количества итераций M	
 	inc dword ptr [comCount]
 	mov eax,dword ptr [M]
 	cmp dword ptr [comCount],eax
