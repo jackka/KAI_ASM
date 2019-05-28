@@ -10,41 +10,41 @@ PopulationGEN proc X:dword, rand:dword
 	local numA:DWORD
 	local numM:DWORD
 	
-	pusha
+	pusha						;
 	
-	mov numA, 48271
+	mov numA, 48271				
 	mov numM, 2147483647
 	
-	mov edi, dword ptr [rand]
-	mov esi, dword ptr [X]
+	mov edi, dword ptr [rand]	;edi=адрес rand
+	mov esi, dword ptr [X]		;esi может поменяться при повторном заходе в процедуру esi=адрес в стеке, по кот лежит адрес X
 	
 	mov ecx,0
 generate:
 	
-	mov eax, dword ptr [edi]
+	mov eax, dword ptr [edi]	; eax=1
 								; ниже генерит вдвойне интереснее, если выполнить алгоритм больше 1-ого раза.							
 	mul numA					; EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
 	div numM					; a * X(i-1) mod m (полученное произведение в EAX делим на dword, указанного по адресу в numM=2147483647)
-	mov eax,edx					; размещаем в EAX предыдущее вычесленное псевдослучайное значение
-	mul numA					; EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
-	div numM					; a * X(i-1) mod m (полученное произведение в EAX делим на dword, указанного по адресу в numM=2147483647)
+;	mov eax,edx					; размещаем в EAX предыдущее вычесленное псевдослучайное значение
+;	mul numA					; EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
+;	div numM					; a * X(i-1) mod m (полученное произведение в EAX делим на dword, указанного по адресу в numM=2147483647)
 	
-	mov dword ptr [edi], edx
+	mov dword ptr [edi], edx	;по адресу rand размещаем X[i] для последующей генерации
 
-	cmp dl,0
+	cmp dl,0					;если сгенеривался 0, то снова на генерацию
 	jz generate
 	
-	mov byte ptr [esi+ecx],dl
+	mov byte ptr [esi+ecx],dl	;размещаем в массиве X сгенерированный байт
 	
 	
 	
 	inc ecx
-	cmp ecx,5
-	jne generate
+	cmp ecx,5					
+	jne generate				;как только сгенерировано 5 чисел, выходим из генерации
 	
 	
 	popa
-	ret 8
+	ret 8						;X:dword, rand:dword
 PopulationGEN endp
 
 
@@ -53,7 +53,7 @@ PopulationGEN endp
 OcenkaPopul proc A:dword, X:dword, D:DWORD
 					
 local SumOfMul:DWORD
-local xArray:dword
+;local xArray:dword
 	pusha
 	
 	mov ecx,0
@@ -95,17 +95,17 @@ OcenkaPopul endp
 
 ;СЕЛЕКЦИЯ
 
-Selection proc Res: DWORD, X:dword, Sel:dword, N:dword, rand:dword
+Selection proc Res: DWORD, X:dword, Sel:dword, N:dword, rand:dword			;N:dword через стек 4 байта
 
 local lrand:dword
 local LenMOne:byte
-local numA:DWORD
-local numM:DWORD
+local numA:DWORD					;48271
+local numM:DWORD					;2147483647
 local divTheOne:DWORD
 local divres:dword
 local divider:dword
 local divhelper:dword
-local divloop:byte;
+;local divloop:byte;
 local divsum:dword;
 local rangesum:dword;
 local submask:dword;
@@ -115,17 +115,17 @@ local submask:dword;
 	mov numM, 2147483647	
 
 	pusha
-	mov edx,dword ptr [rand]
-	mov edx,dword ptr [edx]
-	mov lrand,edx
+	mov edx,dword ptr [rand]			;edx=ссылка на адрес rand в стеке
+	mov edx,dword ptr [edx]				;edx=rand=ссылка на адрес rand в стеке
+	mov lrand,edx						;lrand=rand
 	
-	mov al,byte ptr [N]
-	mov LenMOne,al
-	mov ebx,0
+	mov al,byte ptr [N]					;al=N
+	mov LenMOne,al						;LenMOne=al=N
+	mov ebx,0							;ebx=0
 
     l4:
-	mov esi,dword ptr [Res]
-	mov esi,dword ptr [esi+ebx*4]
+	mov esi,dword ptr [Res]				;esi=адрес Res
+	mov esi,dword ptr [esi+ebx*4]		;
     mov divider,esi
 	
 	mov divTheOne,1
