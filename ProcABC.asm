@@ -353,6 +353,7 @@ Skreshiv proc	Sel:dword, X:dword, rand:dword
 	local numM:DWORD
 	local exchvar1:dword
 	local exchvar2:dword
+	local loop5:dword
 	
 	pusha
 	
@@ -371,6 +372,8 @@ Skreshiv proc	Sel:dword, X:dword, rand:dword
 	mov ecx,0					;ecx=0
 a1:
 	
+	mov loop5,0
+lp5:	
 	mov eax, lrand					;eax=lrand=edx=rand
 									; два повтора для лучшего начального смешивания.							
 	mul numA						; EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
@@ -387,12 +390,14 @@ a1:
 	mov bl, byte ptr [edi+ecx*2]	;bl=sel[i+ecx*2]
 	mov eax,5						;eax=5
 	mul bl							;eax=sel[i+ecx*2]*5
+	add eax,loop5
 	mov bl, byte ptr [esi+eax]		;bl=массив X
 	mov byte ptr [exchvar1], bl		;exchvar1=bl=массив X
 	
 	mov bl, byte ptr [edi+ecx*2+1]	;bl=sel
 	mov eax,5						;eax=5
 	mul bl							;al=bl(sel)*5
+	add eax,loop5
 	mov bl, byte ptr [esi+eax]		;bl=массив X
 	mov byte ptr [exchvar2], bl		;exchvar2=bl=массив X
 
@@ -413,12 +418,15 @@ a1:
     and cl,dl
     and byte ptr [exchvar1],bl
     or  byte ptr [exchvar1],cl
-   
+    
+	pop ecx
+	
    	xor ebx,ebx
 	mov bl, byte ptr [edi+ecx*2]
 	mov eax,5
 	mul bl
 	mov bl, byte ptr [exchvar1]
+	add eax,loop5
 	mov byte ptr [esi+eax],bl
 
 	
@@ -426,10 +434,13 @@ a1:
 	mov eax,5
 	mul bl
 	mov bl,byte ptr [exchvar2]
+	add eax,loop5
    	mov byte ptr [esi+eax],bl
+
+	inc loop5
+	cmp loop5,5
+	jl lp5
 	
-		
-	pop ecx	
 	inc cl
 	cmp cl,K
 	jl a1
