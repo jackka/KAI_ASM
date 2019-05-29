@@ -166,6 +166,61 @@ local submask:dword;
 	inc bl
 	cmp bl,LenMOne
 	jl l4
+	
+	
+	
+	mov al,byte ptr [N]
+	dec al
+	mov LenMOne,al
+	
+								;сортировка по Res методом пузырька ( в соответствии с сортировкой перемещаются пятерки из X )
+								
+    mov esi,dword ptr [Res]    	;позиционируемся на массив
+	mov edi,dword ptr [X]   	;позиционируемся на массив
+a2:    
+	xor ecx,ecx
+	mov cl,LenMOne    
+    xor ebx,ebx        		;флаг – были/не были перестановки в проходе
+a3: 
+	mov eax,[esi+ecx*4-4]		;получаем значение очередного элемента    
+    cmp [esi+ecx*4],eax    	;сравниваем со значением соседнего элемента
+    jnb a4    				;если больше или равен - идем к следующему элементу
+    setna bl    			;была перестановка - взводим флаг
+    xchg eax,[esi+ecx*4]		;меняем значение элементов местами
+    mov [esi+ecx*4-4],eax
+							;меняем местами соответсвующие пятерки из X
+
+	mov eax,5
+	mul cl
+	push [edi+eax]  			;4 байта 
+	push [edi+eax+4] 			;1 байт
+
+	push [edi+eax-5] 			;4 байта 
+	push [edi+eax-1] 			;1 байт
+	
+	pop edx
+	mov byte ptr [edi+eax+4],dl	;1 байт взять из стека можно только так
+	pop [edi+eax] 				;4 байта 
+
+	pop edx
+	mov byte ptr [edi+eax-1],dl	;1 байт взять из стека можно только так
+	pop [edi+eax-5]				;4 байта 
+
+	
+a4: 
+	loop a3    				;двигаемся вверх до границы массива
+    add esi,4    			;сдвигаем границу отсортированного массива
+	add edi,5				;и позицию в большом массиве
+    dec ebx    				;проверяем были ли перестановки
+    jnz finsort    				;если перестановок не было - заканчиваем сортировку
+    dec LenMOne        		;уменьшаем количество неотсортированных элементов
+    jnz a2					;если есть еще неотсортированные элементы - начинаем новый проход
+	
+	
+finsort:					; конец сортировки
+
+
+
 
 									;далее, в зависимости от того сколько особей K заданы пользователем на скрещивание 
 									;проводим селекцию случайно выбирая из развернутых через 1 и отсортированных по возрастанию разносей Di-D.
@@ -274,7 +329,7 @@ Mutation proc	X:dword, rand:dword, N:dword
 	
 	pusha
 	
-	mov Prob,al			; взять из параметра в AL вероятность мутации P
+	mov Prob,al					; взять из параметра в AL вероятность мутации P
 	
 	mov edx,dword ptr [rand]
 	mov edx,dword ptr [edx]
@@ -343,11 +398,12 @@ Mutation endp
 
 ;СКРЕЩИВАНИЕ
 	
-Skreshiv proc	Sel:dword, X:dword, rand:dword
+Skreshiv proc	Sel:dword, X:dword, rand:dword, XBuf:dword
 	
 ;выбирается часть, которыми будут обмениваться
 	
 	local K:byte
+	local addrXBuf:dword
 	local lrand:dword
 	local numA:DWORD
 	local numM:DWORD
@@ -356,6 +412,9 @@ Skreshiv proc	Sel:dword, X:dword, rand:dword
 	local loop5:dword
 	
 	pusha
+	
+	mov esi,dword ptr [XBuf]
+	mov addrXBuf, esi
 	
 	mov numA, 48271				;numA=48271
 	mov numM, 2147483647		;numM=2147483647
@@ -374,19 +433,8 @@ a1:
 	
 	mov loop5,0
 lp5:	
-	mov eax, lrand					;eax=lrand=edx=rand
-									; два повтора для лучшего начального смешивания.							
-	mul numA						; EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
-	div numM						; a * X(i-1) mod m (полученное произведение в EAX делим на dword, указанного по адресу в numM=2147483647)
-	mov eax,edx						;EAX=rand[i-1]
-	mul numA						;EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
-	div numM						;edx=
 	
-	mov lrand, edx					;lrand=edx=rand[i-1]
-	
-	and dl,7						;выбор трех последних бит из dl=rand[i], отбор значения для случайного номера бита в скрещивании
-	nop
-	xor ebx,ebx
+	xor ebx,ebx						; загрузка байтов для скрещивания в exchvar1 и exchvar2
 	mov bl, byte ptr [edi+ecx*2]	;bl=sel[i+ecx*2]
 	mov eax,5						;eax=5
 	mul bl							;eax=sel[i+ecx*2]*5
@@ -401,45 +449,67 @@ lp5:
 	mov bl, byte ptr [esi+eax]		;bl=массив X
 	mov byte ptr [exchvar2], bl		;exchvar2=bl=массив X
 
+
+	nop
+	nop
+	nop
+zeroTryAgain:
+	mov bh,byte ptr [exchvar2]		; на случай повтора, если случится Xi в результате скрещивания будет равен 0
+									; далее работаем только bh вместо exchvar2
 	
-	push ecx					; сохраняем счетчик пар, так как использовать в сдвиге sh(l/r) можно только регистр ecx
+	mov eax, lrand					;eax=lrand=edx=rand
+									; два повтора для лучшего начального смешивания.							
+	mul numA						; EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
+	div numM						; a * X(i-1) mod m (полученное произведение в EAX делим на dword, указанного по адресу в numM=2147483647)
+	mov eax,edx						;EAX=rand[i-1]
+	mul numA						;EAX=a * X(i-1) (умножаем EAX на dword, указанный по адресу в numA=48271)
+	div numM						;edx=
 	
-    mov cl,dl					;cl=три последние бита из dl=rand[i]				
-	mov al,1					; al=1
-    shl al,cl					; al=маска (сдвинули 1 на число бит из cl=три последние бита из dl=rand[i])
+	mov lrand, edx					;lrand=edx=rand[i-1]
 	
-    mov bl,al					;bl=маска
-    mov cl,al					;cl=маска
-    and al,byte ptr [exchvar1]	;наложили маску на X[i]
-    mov dl,byte ptr [exchvar2]	;dl=байт из 
-    not bl						;bl=инвертированная маска
-    and byte ptr [exchvar2],bl  
-    or  byte ptr [exchvar2],al
-    and cl,dl
-    and byte ptr [exchvar1],bl
-    or  byte ptr [exchvar1],cl
-    
-	pop ecx
+		
+	and dl,15						;выбор 4 последних бит из dl=rand[i], выбор позиции рассечения хромосомы при скрещивании
+	mov al,0ffh						;на случай, если сучайное число ровно восемь, заранее готовим маску перед прыжком (будет полное замещение хромосомы следующего родителя)
+    cmp dl,8
+	je nParent						;если 8, то это ситуация когда все биты берем от этого родителя
 	
-   	xor ebx,ebx
-	mov bl, byte ptr [edi+ecx*2]
-	mov eax,5
-	mul bl
-	mov bl, byte ptr [exchvar1]
-	add eax,loop5
-	mov byte ptr [esi+eax],bl
+	and dl,7						;если выше не 8, то точно (число 0..7) тогда берем первые три бита
+	cmp dl,0
+	jz nParent						; без рассечения будут браться все биты из соотв. хромосомы след. родителя 
+	mov al,0						; иначе выбираем только часть хромосом от обоих
+	mov bl,0
+rOne:
+	shl al,1						; al=маска (1 заполнила все от точки рассечения до конца вправо на число бит из cl=три последние бита из dl=rand[i])
+	add al,1
+	
+	inc bl
+	cmp bl,dl
+	jl rOne
 
 	
-	mov bl, byte ptr [edi+ecx*2+1]
-	mov eax,5
-	mul bl
-	mov bl,byte ptr [exchvar2]
-	add eax,loop5
-   	mov byte ptr [esi+eax],bl
+nParent:		
+	
+    mov bl,al					;bl=копия маски из al
+    and al,byte ptr [exchvar1]	;в al сохраняется результат and al и X[i] для отбора только тех бит, что 1 в al 
+	not bl						;bl=инвертир маску для отбора недостающей части от хромосомы другого родителя
+	and bh,bl					;наложили маску на X[i] другого родителя
+	or  bh,al					;схлопнуни разрезанные чаcти в новую хромосому  Xi
+    	
+	jz zeroTryAgain				;если хромосома оказалась равно нулю пробуем по другому еще раз через выбор другого места для разрезания
 
+	
+	mov eax,ecx
+	mov bl,5
+	mul bl
+	add eax,loop5
+	add eax,addrXBuf
+	mov byte ptr [eax],bh
+	
+	
 	inc loop5
 	cmp loop5,5
 	jl lp5
+	
 	
 	inc cl
 	cmp cl,K
@@ -452,7 +522,7 @@ lp5:
 	
 	
 	popa
-	ret 12
+	ret 16
 Skreshiv endp
 
 

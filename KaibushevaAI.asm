@@ -22,13 +22,13 @@
 
 include console.inc 
 
-extern  PopulationGEN@8:near, OcenkaPopul@12:near, OutResult@4:near, Selection@20:near, Mutation@12:near, Skreshiv@12:near  ;внешние процедуры
+extern  PopulationGEN@8:near, OcenkaPopul@12:near, OutResult@4:near, Selection@20:near, Mutation@12:near, Skreshiv@16:near  ;внешние процедуры
 
 
 .data
 N    DB ?				;размер начальной популяции в диапазоне  4 <= N <= 10
 X    DB 50 DUP (?)		;корни - генерируются алгоритмом
-
+XBuf DB 50 DUP (?)		;корни - получаются на этапе скрещивания
 A    DB 5 DUP (?)		;вводит пользователь
 D    DD ?				;вводит пользователь
 M    DD ?				;количество итераций
@@ -175,12 +175,26 @@ ComMode:										;если выбран основной режим
 
 	call Mutation@12
 
+	push offset XBuf
 	xor eax,eax
 	mov al,byte ptr [K] 
 	push offset rand
 	push offset X
 	push offset Sel
-	call Skreshiv@12
+	call Skreshiv@16
+	
+	nop
+	nop
+	
+	xor ecx,ecx
+	mov al,K						;замещаем самые слабые особи K детьми самых подходящих, полученных в результате скрещивания
+	mov bl,5
+	mul bl
+	mov cl,al
+	mov esi,offset XBuf
+	mov edi,offset X
+	rep movsb
+	
 
 ;вывод количества итераций M	
 	inc dword ptr [comCount]
