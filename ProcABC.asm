@@ -450,9 +450,6 @@ lp5:
 	mov byte ptr [exchvar2], bl		;exchvar2=bl=массив X
 
 
-	nop
-	nop
-	nop
 zeroTryAgain:
 	mov bh,byte ptr [exchvar2]		; на случай повтора, если случится Xi в результате скрещивания будет равен 0
 									; далее работаем только bh вместо exchvar2
